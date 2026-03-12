@@ -53,11 +53,20 @@ export async function getAccessToken(): Promise<string> {
 }
 
 export function zoomApi(token: string) {
-  return axios.create({
+  const instance = axios.create({
     baseURL: ZOOM_API_BASE,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
+  instance.interceptors.response.use(
+    (res) => res,
+    (err) => {
+      const detail = err.response?.data || err.message;
+      console.error("Zoom API error:", err.config?.url, JSON.stringify(detail));
+      return Promise.reject(new Error(`Zoom API error (${err.config?.url}): ${JSON.stringify(detail)}`));
+    }
+  );
+  return instance;
 }
