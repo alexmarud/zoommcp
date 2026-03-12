@@ -24,26 +24,32 @@ export async function getAccessToken(): Promise<string> {
     "base64"
   );
 
-  const { data } = await axios.post(
-    ZOOM_OAUTH_URL,
-    new URLSearchParams({
-      grant_type: "account_credentials",
-      account_id: accountId,
-    }),
-    {
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    }
-  );
+  try {
+    const { data } = await axios.post(
+      ZOOM_OAUTH_URL,
+      new URLSearchParams({
+        grant_type: "account_credentials",
+        account_id: accountId,
+      }),
+      {
+        headers: {
+          Authorization: `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
 
-  cachedToken = {
-    token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in - 60) * 1000,
-  };
+    cachedToken = {
+      token: data.access_token,
+      expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+    };
 
-  return cachedToken.token;
+    return cachedToken.token;
+  } catch (err: any) {
+    const detail = err.response?.data || err.message;
+    console.error("Zoom OAuth error:", JSON.stringify(detail));
+    throw new Error(`Zoom OAuth failed: ${JSON.stringify(detail)}`);
+  }
 }
 
 export function zoomApi(token: string) {
